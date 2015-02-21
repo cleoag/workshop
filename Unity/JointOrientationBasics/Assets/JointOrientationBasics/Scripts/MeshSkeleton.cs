@@ -66,9 +66,20 @@ public class MeshSkeleton : ScriptableObject
             return;
         }
 
+        if (this.joints == null)
+        {
+            Init(this.mesh);
+        }
+
         foreach (var bone in this.mesh.bones)
         {
             bone.rotation = Quaternion.identity;
+
+            JointNode joint = this.joints[bone];
+            if(joint != null)
+            {
+                joint.SetRawtData(bone.position, bone.rotation);
+            }
         }
     }
 
@@ -92,6 +103,12 @@ public class MeshSkeleton : ScriptableObject
                 bone.position = pose.Position;
                 bone.rotation = pose.Rotation;
             }
+
+            JointNode joint = this.joints[bone];
+            if (joint != null)
+            {
+                joint.SetRawtData(bone.position, bone.rotation);
+            }
         }
     }
 
@@ -107,7 +124,7 @@ public class MeshSkeleton : ScriptableObject
             Init(this.mesh);
         }
 
-        this.joints[this.mesh.rootBone].CalculateOffsets(null, this.mesh.rootBone.position, this.mesh.rootBone.rotation);
+        BuildHeirarchy();
     }
 
     internal JointNode GetRootBone()
@@ -196,8 +213,4 @@ public class MeshSkeleton : ScriptableObject
             this.basePose.Add(bone, new Pose(bone.position, bone.rotation));
         }
     }
-
-
-
-
 }

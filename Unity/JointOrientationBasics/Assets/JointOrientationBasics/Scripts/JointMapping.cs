@@ -351,6 +351,7 @@ public class JointMapping : MonoBehaviour
 
     internal void UpdateBone(Transform bone, JointNode kinectNode)
     {
+        Map map = GetMapFromBone(bone);
         JointNode joint = this.MeshSkeleton.GetJoint(bone);
         if(joint != null)
         {
@@ -364,12 +365,12 @@ public class JointMapping : MonoBehaviour
                 }
             }
 
-            bone.rotation = rotation;
+            bone.rotation = rotation * map.AdjustmentToMesh;
         }
 
         foreach (var child in kinectNode.Children)
         {
-            Map map = GetMapFromTypeName(child.Name);
+            map = GetMapFromTypeName(child.Name);
             if (map != null)
             {
                 UpdateBone(map.Bone, child);
