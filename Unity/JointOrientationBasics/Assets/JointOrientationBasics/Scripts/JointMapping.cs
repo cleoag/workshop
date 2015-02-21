@@ -329,8 +329,6 @@ public class JointMapping : MonoBehaviour
         // update the skeleton with the new body joint/orientation information
         this.KinectSkeleton.UpdateJointsFromKinectBody(body, Vector3.zero, Quaternion.identity);
 
-        this.MeshSkeleton.UpdateJoints();
-
         // upadte the mesh skeleton
         if (this.ApplyIdentity)
         {
@@ -342,21 +340,41 @@ public class JointMapping : MonoBehaviour
         }
         else
         {
-            // get the bone reference
-            //JointNode kn = GetKinectNodeFromJointType(map.Type);
+            Transform bone = this.Mesh.rootBone;
+            JointNode kinectNode = this.KinectSkeleton.GetRootJoint();
 
-            //Quaternion adj = Quaternion.identity;
-            //if (kn.Parent != null)
-            //{
-            //    Map parent = this.JointMapper.GetMapFromTypeName(kn.Parent.Name);
-            //    if (parent == null)
-            //    {
-            //        adj = this.Adjustment * kn.Parent.Rotation * node.LocalRotation;
-            //    }
-            //}
-            //adj = adj * map.AdjustmentToMesh;
+            UpdateBone(bone, kinectNode);
+
+            this.MeshSkeleton.UpdateHierachy();
+        }
+    }
+
+    internal void UpdateBone(Transform bone, JointNode kinectNode)
+    {
+        JointNode joint = this.MeshSkeleton.GetJoint(bone);
+        if(joint != null)
+        {
+            Quaternion rotation = kinectNode.Rotation;
+            if (kinectNode.Parent != null)
+            {
+                Map parent = GetMapFromTypeName(kinectNode.Parent.Name);
+                if (parent == null)
+                {
+                    rotation = kinectNode.Parent.Rotation * kinectNode.LocalRotation;
+                }
+            }
+
+            bone.rotation = rotation;
         }
 
+        foreach (var child in kinectNode.Children)
+        {
+            Map map = GetMapFromTypeName(child.Name);
+            if (map != null)
+            {
+                UpdateBone(map.Bone, child);
+            }
+        }
     }
 
     internal JointNode GetKinectRootNode()

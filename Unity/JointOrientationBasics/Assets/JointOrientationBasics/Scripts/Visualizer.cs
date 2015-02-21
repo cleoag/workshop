@@ -51,6 +51,7 @@ public class Visualizer : MonoBehaviour
     public bool DrawJoint = false;
     public bool DrawBoneModel = true;
     public bool DebugLines = true;
+    public bool ApplyRotataion = false;
 
     public Material material;
 
@@ -132,6 +133,9 @@ public class Visualizer : MonoBehaviour
 
         // expose the list so we can edit the adjustment on each joint
         this.JointList = this.JointMapper.List;
+
+        // update the visual 
+        this.JointMapper.ApplyToMesh = this.ApplyRotataion;
 
         // Get the closest body
         Kinect.Body body = this.BodySourceManager.FindClosestBody();

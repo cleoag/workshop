@@ -1,0 +1,16 @@
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\Assembly-CSharp-Editor-firstpass.dll
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\Assembly-CSharp-Editor-firstpass.pdb
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\SyntaxTree.VisualStudio.Unity.Bridge.dll
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\SyntaxTree.VisualStudio.Unity.Messaging.dll
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityEditor.dll
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityEditor.Graphs.dll
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityEngine.dll
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityVS.VersionSpecific.dll
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\Assembly-CSharp-firstpass.pdb
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\Assembly-CSharp.pdb
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityEngine.xml
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityEditor.xml
+C:\Code\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityEditor.Graphs.xml
+C:\Code\Unity\JointOrientationBasics\obj\Debug\UnityVS.JointOrientationBasics.CSharp.Editor.Plugins.csprojResolveAssemblyReference.cache
+C:\Code\Unity\JointOrientationBasics\obj\Debug\Assembly-CSharp-Editor-firstpass.dll
+C:\Code\Unity\JointOrientationBasics\obj\Debug\Assembly-CSharp-Editor-firstpass.pdb

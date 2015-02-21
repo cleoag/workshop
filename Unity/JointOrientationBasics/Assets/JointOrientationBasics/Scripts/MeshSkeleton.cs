@@ -95,26 +95,16 @@ public class MeshSkeleton : ScriptableObject
         }
     }
 
-
-    public void UpdateJoints()
+    internal void UpdateHierachy()
     {
         if (this.mesh == null)
         {
             return;
         }
 
-        if(this.joints == null)
+        if (this.joints == null)
         {
             Init(this.mesh);
-        }
-
-        foreach (var bone in this.mesh.bones)
-        {
-            JointNode joint = this.joints[bone];
-            if(joint != null)
-            {
-                joint.SetRawtData(bone.position, bone.rotation);
-            }
         }
 
         this.joints[this.mesh.rootBone].CalculateOffsets(null, this.mesh.rootBone.position, this.mesh.rootBone.rotation);
@@ -206,6 +196,7 @@ public class MeshSkeleton : ScriptableObject
             this.basePose.Add(bone, new Pose(bone.position, bone.rotation));
         }
     }
+
 
 
 
