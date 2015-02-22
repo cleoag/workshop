@@ -52,6 +52,7 @@ public class Visualizer : MonoBehaviour
     public bool DrawBoneModel = true;
     public bool DebugLines = true;
     public bool ApplyRotataion = false;
+    public bool ApplyIdentity = false;
 
     public Material material;
 
@@ -136,6 +137,7 @@ public class Visualizer : MonoBehaviour
 
         // update the visual 
         this.JointMapper.ApplyToMesh = this.ApplyRotataion;
+        this.JointMapper.ApplyIdentity = this.ApplyIdentity;
 
         // Get the closest body
         Kinect.Body body = this.BodySourceManager.FindClosestBody();
@@ -145,7 +147,7 @@ public class Visualizer : MonoBehaviour
         }
 
         // update the skeleton with the new body joint/orientation information
-        this.JointMapper.UpdateKinectSkeleton(body);
+        this.JointMapper.UpdateSkeletons(body);
 
         // update the visual models
         VisualizeJoints(this.JointMapper.GetKinectRootNode(), MeshType.Kinect);
@@ -342,17 +344,27 @@ public class Visualizer : MonoBehaviour
         GameObject jm = model.JointMesh;
         Helpers.SetVisible(jm, this.DrawJoint);
 
-        // draw the orientaion around the joint
-        if(this.DebugLines)
+        // set joint position based on direction of bone
+        if (joint.Parent != null)
         {
-            Helpers.DrawDebugQuaternion(joint.RawPosition, joint.RawRotation, Helpers.ColorRange.RGB);
+            Vector3 direction = joint.Position - joint.Parent.Position;
+            float length = direction.magnitude;
+
+            Quaternion forwardRotation = Quaternion.LookRotation(direction);
+            Vector3 position = forwardRotation * (Vector3.forward * length);
+
+            // draw the orientaion around the joint
+            if(this.DebugLines)
+            {
+                Helpers.DrawDebugBoneWithNormal(position, length, forwardRotation, Helpers.ColorRange.BW);
+            }
+
+            // update model
+            UpdateBoneMesh(bone, joint.Position, joint.Rotation, length, this.BoneLength, this.BoneScale);
         }
 
-        // update model
-        UpdateBoneMesh(bone, joint.RawPosition, joint.RawRotation, .25f, this.BoneLength, this.BoneScale);
-
         // visualize the mesh model
-        UpdateJointMesh(jm, joint.RawPosition, joint.RawRotation, this.JointScale);
+        UpdateJointMesh(jm, joint.Position, joint.Rotation, this.JointScale);
     }
 
     /// <summary>

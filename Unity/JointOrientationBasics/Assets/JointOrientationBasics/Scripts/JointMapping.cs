@@ -34,7 +34,7 @@ public class JointMapping : MonoBehaviour
         {
             if(this.kinectSkeleton == null)
             {
-                this.kinectSkeleton = ScriptableObject.CreateInstance<KinectSkeleton>();
+                this.kinectSkeleton = new KinectSkeleton();
                 this.kinectSkeleton.Init();
             }
 
@@ -49,7 +49,7 @@ public class JointMapping : MonoBehaviour
         {
             if(this.meshSkeleton == null)
             {
-                this.meshSkeleton = ScriptableObject.CreateInstance<MeshSkeleton>();
+                this.meshSkeleton = new MeshSkeleton();
                 this.meshSkeleton.Init(this.Mesh);
             }
             return this.meshSkeleton;
@@ -165,33 +165,6 @@ public class JointMapping : MonoBehaviour
     internal JointNode GetKinectNodeFromJointType(JointType type)
     {
         return this.KinectSkeleton.GetJoint(type);
-    }
-
-    internal JointNode GetKinectNodeFromJointTypeName(string jointName)
-    {
-        Map map = GetMapFromTypeName(jointName);
-        if (map != null)
-        {
-            return GetKinectNodeFromJointType(map.Type);
-        }
-
-        return null;
-    }
-
-    internal JointNode GetMeshNodeFromBone(Transform bone)
-    {
-        return this.MeshSkeleton.GetJoint(bone);
-    }
-
-    internal JointNode GetMeshNodeFromBoneName(string boneName)
-    {
-        Map map = GetMapFromBoneName(boneName);
-        if(map != null)
-        {
-            return this.MeshSkeleton.GetJoint(map.Bone);
-        }
-
-        return null;
     }
 
     public void AddMapping(string typeName, string boneName)
@@ -324,7 +297,7 @@ public class JointMapping : MonoBehaviour
         return foundBone;
     }
 
-    internal void UpdateKinectSkeleton(Body body)
+    internal void UpdateSkeletons(Body body)
     {
         // update the skeleton with the new body joint/orientation information
         this.KinectSkeleton.UpdateJointsFromKinectBody(body, Vector3.zero, Quaternion.identity);
@@ -340,41 +313,62 @@ public class JointMapping : MonoBehaviour
         }
         else
         {
-            Transform bone = this.Mesh.rootBone;
-            JointNode kinectNode = this.KinectSkeleton.GetRootJoint();
-
-            UpdateBone(bone, kinectNode);
-
-            this.MeshSkeleton.UpdateHierachy();
+            ParseMappedJoints(GetKinectNodeFromJointType(JointType.SpineBase), null);
         }
     }
 
-    internal void UpdateBone(Transform bone, JointNode kinectNode)
+    private void ParseMappedJoints(JointNode kinectJoint, JointNode parent)
     {
-        Map map = GetMapFromBone(bone);
-        JointNode joint = this.MeshSkeleton.GetJoint(bone);
-        if(joint != null)
+        if(kinectJoint == null)
         {
-            Quaternion rotation = kinectNode.Rotation;
-            if (kinectNode.Parent != null)
-            {
-                Map parent = GetMapFromTypeName(kinectNode.Parent.Name);
-                if (parent == null)
-                {
-                    rotation = kinectNode.Parent.Rotation * kinectNode.LocalRotation;
-                }
-            }
-
-            bone.rotation = rotation * map.AdjustmentToMesh;
+            return;
         }
 
-        foreach (var child in kinectNode.Children)
+        Map map = this.GetMapFromTypeName(kinectJoint.Name);
+        if(map != null)
         {
-            map = GetMapFromTypeName(child.Name);
-            if (map != null)
+            JointNode kn = this.KinectSkeleton.GetJoint(map.Type);
+            JointNode mn = this.MeshSkeleton.GetBoneNode(map.Bone);
+            if (kn != null && mn != null)
             {
-                UpdateBone(map.Bone, child);
+                // set joint position based on direction of bone
+                if(map.Bone.parent != null)
+                {
+                    Vector3 direction = map.Bone.position - map.Bone.parent.position;
+                    float length = direction.magnitude;
+
+                    Quaternion forwardRotation = Quaternion.LookRotation(direction);
+                    Vector3 position = forwardRotation * (Vector3.forward * length);
+                    
+                    map.Bone.position = map.Bone.parent.position + position;
+                }
+                else
+                {
+                    map.Bone.position = mn.Position;
+                }
+
+                // do we need to include parent rotation
+                Quaternion appliedRotation = Quaternion.identity;
+                if(parent != null)
+                {
+                    Map parentMap = this.GetMapFromTypeName(parent.Name);
+                    if(parentMap == null)
+                    {
+                        appliedRotation = parent.Rotation * Quaternion.Inverse(new Quaternion(1, 1, -1, 1)) ;
+                    }
+                    else
+                    {
+                        appliedRotation = kn.Rotation * Quaternion.Inverse(map.AdjustmentToMesh);
+                    }
+                }
+
+                map.Bone.rotation = appliedRotation;
             }
+        }
+
+        foreach(var child in kinectJoint.Children)
+        {
+            ParseMappedJoints(child, kinectJoint);
         }
     }
 

@@ -4,59 +4,52 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-public class MeshSkeleton : ScriptableObject
+public class MeshSkeleton
 {
-    public class Pose
-    {
-        public Vector3 Position;
-        public Quaternion Rotation;
+    private SkinnedMeshRenderer mesh;
 
-        public Pose(Vector3 position, Quaternion rotation)
+    private Dictionary<string, JointNode> jointNodes;
+    private Dictionary<string, JointNode> JointNodes
+    { 
+        get
         {
-            this.Position = position;
-            this.Rotation = rotation;
+            if (this.jointNodes == null)
+            {
+                this.jointNodes = new Dictionary<string, JointNode>();
+            }
+
+            return this.jointNodes;
         }
     }
 
-    private SkinnedMeshRenderer mesh;
+    private List<string> _boneNames;
+    internal List<string> BoneNames
+    {
+        get
+        {
+            if (this._boneNames == null)
+            {
+                this._boneNames = new List<string>();
+            }
 
-    private Dictionary<Transform, JointNode> joints;
+            return this._boneNames;
+        }
+    }
 
-    private Dictionary<Transform, Pose> basePose;
-
-    internal List<string> BoneNames { get; set; }
-
-    public void Init(SkinnedMeshRenderer mesh)
+    internal void Init(SkinnedMeshRenderer mesh)
     {
         this.mesh = mesh;
 
-        if(this.joints == null)
-        {
-            this.joints = new Dictionary<Transform, JointNode>();
-        }
-        this.joints.Clear();
-
-        if (this.basePose == null)
-        {
-            this.basePose = new Dictionary<Transform, Pose>();
-        }
-        this.basePose.Clear();
-
-        if (this.BoneNames == null)
-        {
-            this.BoneNames = new List<string>();
-        }
-        this.BoneNames.Clear();
+        this.JointNodes.Clear();
 
         // generate the bone names
+        this.BoneNames.Clear();
         foreach (var bone in this.mesh.bones)
         {
             this.BoneNames.Add(bone.name);
         }
 
-        GetBasePose();
-
-        BuildHeirarchy();
+        GenerateBasePoses();
     }
 
     internal void ApplyIdentityRoatations()
@@ -66,20 +59,9 @@ public class MeshSkeleton : ScriptableObject
             return;
         }
 
-        if (this.joints == null)
-        {
-            Init(this.mesh);
-        }
-
         foreach (var bone in this.mesh.bones)
         {
             bone.rotation = Quaternion.identity;
-
-            JointNode joint = this.joints[bone];
-            if(joint != null)
-            {
-                joint.SetRawtData(bone.position, bone.rotation);
-            }
         }
     }
 
@@ -90,127 +72,68 @@ public class MeshSkeleton : ScriptableObject
             return;
         }
 
-        if (this.joints == null || this.basePose == null)
+        if (this.JointNodes.Count == 0)
         {
             Init(this.mesh);
         }
 
         foreach (var bone in this.mesh.bones)
         {
-            Pose pose = this.basePose[bone];
-            if (pose != null)
+            JointNode node = this.JointNodes[bone.name];
+            if (node != null)
             {
-                bone.position = pose.Position;
-                bone.rotation = pose.Rotation;
-            }
-
-            JointNode joint = this.joints[bone];
-            if (joint != null)
-            {
-                joint.SetRawtData(bone.position, bone.rotation);
+                bone.position = node.Position;
+                bone.rotation = node.Rotation;
             }
         }
     }
 
-    internal void UpdateHierachy()
+    internal JointNode GetRootBone()
+    {
+        return GetBoneNode(this.mesh.rootBone);
+    }
+
+    internal JointNode GetBoneNode(Transform bone)
+    {
+        if (this.mesh == null || bone == null || !this.JointNodes.ContainsKey(bone.name))
+        {
+            return null;
+        }
+
+        return this.JointNodes[bone.name];
+    }
+
+    private void GenerateBasePoses()
     {
         if (this.mesh == null)
         {
             return;
         }
 
-        if (this.joints == null)
-        {
-            Init(this.mesh);
-        }
+        this.JointNodes.Clear();
 
-        BuildHeirarchy();
+        CreateBoneNode(this.mesh.rootBone, null);
+
+        // calculate the relative joint and rotation
+        this.JointNodes[this.mesh.rootBone.name].CalculateOffsets(null, Vector3.zero, Quaternion.identity);
     }
 
-    internal JointNode GetRootBone()
+    private void CreateBoneNode(Transform bone, JointNode parent)
     {
-        if(this.mesh == null)
-        {
-            return null;
-        }
+        JointNode node = new JointNode();
+        node.Init(bone.name);
+        node.SetRawtData(bone.position, bone.rotation);
+        this.JointNodes.Add(bone.name, node);
 
-        Transform root = this.mesh.rootBone;
-
-        JointNode joint = null;
-        if (this.joints != null && this.joints.ContainsKey(root))
-        {
-            joint = this.joints[root];
-        }
-
-        return joint;
-    }
-
-    internal JointNode GetJoint(Transform bone)
-    {
-        // ensure a collection exists
-        if (this.joints == null || !this.joints.ContainsKey(bone))
-        {
-            return null;
-        }
-
-        // return it
-        return this.joints[bone];
-    }
-
-    private void BuildHeirarchy()
-    {
-        if (this.mesh == null || this.joints == null)
-        {
-            return;
-        }
-
-        this.joints.Clear();
-
-        CreateJoints(this.mesh.rootBone, null);
-    }
-
-    private void CreateJoints(Transform bone, JointNode parent)
-    {
-        if(bone == null)
-        {
-            return;
-        }
-
-        JointNode joint = GetJoint(bone);
-        if (joint == null)
-        {
-            joint = ScriptableObject.CreateInstance<JointNode>();
-            joint.Init(bone.name);
-
-            joint.SetRawtData(bone.position, bone.rotation);
-        }
-
-        // add to collection
-        this.joints.Add(bone, joint);
-
-        //  add this as a child
+        // add this node as a child of the parent
         if(parent != null)
         {
-            parent.AddChildNode(joint);
+            parent.AddChildNode(node);
         }
 
         foreach (Transform child in bone)
         {
-            CreateJoints(child, joint);
-        }
-    }
-
-    internal void GetBasePose()
-    {
-        if (this.mesh == null || this.basePose == null)
-        {
-            return;
-        }
-
-        this.basePose.Clear();
-        foreach (var bone in this.mesh.bones)
-        {
-            this.basePose.Add(bone, new Pose(bone.position, bone.rotation));
+            CreateBoneNode(child, node);
         }
     }
 }

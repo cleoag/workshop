@@ -6,19 +6,29 @@ using System.Text;
 using UnityEngine;
 using Windows.Kinect;
 
-[Serializable]
-public class KinectSkeleton : ScriptableObject
+public class KinectSkeleton
 {
-    public enum SegmentType { Body, Head, LeftArm, LeftHand, RightArm, RightHand, LeftLeg, RightLeg };
+    private enum SegmentType { Body, Head, LeftArm, LeftHand, RightArm, RightHand, LeftLeg, RightLeg };
 
-    [SerializeField]
-    public Dictionary<JointType, JointNode> Joints;
+    private Dictionary<JointType, JointNode> jointNodes;
+    private Dictionary<JointType, JointNode> JointNodes
+    {
+        get
+        {
+            if (this.jointNodes == null)
+            {
+                this.jointNodes = new Dictionary<JointType, JointNode>();
+            }
+
+            return this.jointNodes;
+        }
+    }
 
     private DoubleExponentialFilter jointSmoother;
 
-    public void Init()
+    internal void Init()
     {
-        if(this.Joints == null)
+        if (this.JointNodes.Count == 0)
         {
             BuildHeirarchy();
         }
@@ -29,14 +39,14 @@ public class KinectSkeleton : ScriptableObject
         }
     }
 
-    public void UpdateJointsFromKinectBody(Body body, Vector3 offsetPosition, Quaternion offsetRotation)
+    internal void UpdateJointsFromKinectBody(Body body, Vector3 offsetPosition, Quaternion offsetRotation)
     {
         if(body == null)
         {
             return;
         }
 
-        if(this.Joints == null || this.jointSmoother == null)
+        if (this.JointNodes.Count == 0 || this.jointSmoother == null)
         {
             Init();
         }
@@ -48,13 +58,13 @@ public class KinectSkeleton : ScriptableObject
     internal JointNode GetJoint(JointType type)
     {
         // ensure a collection exists
-        if (this.Joints == null || !this.Joints.ContainsKey(type))
+        if (this.JointNodes.Count == 0 || !this.JointNodes.ContainsKey(type))
         {
             return null;
         }
 
         // return it
-        return this.Joints[type];
+        return this.JointNodes[type];
     }
 
     internal JointNode GetRootJoint()
@@ -65,67 +75,61 @@ public class KinectSkeleton : ScriptableObject
     private void BuildHeirarchy()
     {
         // ensure a collection exists
-        if (this.Joints == null)
+        if (this.JointNodes.Count == 0)
         {
             CreateJoints();
         }
 
         // left leg
-        this.Joints[JointType.SpineBase].AddChildNode(this.Joints[JointType.HipLeft]);
-        this.Joints[JointType.HipLeft].AddChildNode(this.Joints[JointType.KneeLeft]);
-        this.Joints[JointType.KneeLeft].AddChildNode(this.Joints[JointType.AnkleLeft]);
-        this.Joints[JointType.AnkleLeft].AddChildNode(this.Joints[JointType.FootLeft]);
+        this.JointNodes[JointType.SpineBase].AddChildNode(this.JointNodes[JointType.HipLeft]);
+        this.JointNodes[JointType.HipLeft].AddChildNode(this.JointNodes[JointType.KneeLeft]);
+        this.JointNodes[JointType.KneeLeft].AddChildNode(this.JointNodes[JointType.AnkleLeft]);
+        this.JointNodes[JointType.AnkleLeft].AddChildNode(this.JointNodes[JointType.FootLeft]);
 
         // right leg
-        this.Joints[JointType.SpineBase].AddChildNode(this.Joints[JointType.HipRight]);
-        this.Joints[JointType.HipRight].AddChildNode(this.Joints[JointType.KneeRight]);
-        this.Joints[JointType.KneeRight].AddChildNode(this.Joints[JointType.AnkleRight]);
-        this.Joints[JointType.AnkleRight].AddChildNode(this.Joints[JointType.FootRight]);
+        this.JointNodes[JointType.SpineBase].AddChildNode(this.JointNodes[JointType.HipRight]);
+        this.JointNodes[JointType.HipRight].AddChildNode(this.JointNodes[JointType.KneeRight]);
+        this.JointNodes[JointType.KneeRight].AddChildNode(this.JointNodes[JointType.AnkleRight]);
+        this.JointNodes[JointType.AnkleRight].AddChildNode(this.JointNodes[JointType.FootRight]);
 
         // spine to head
-        this.Joints[JointType.SpineBase].AddChildNode(this.Joints[JointType.SpineMid]);
-        this.Joints[JointType.SpineMid].AddChildNode(this.Joints[JointType.SpineShoulder]);
-        this.Joints[JointType.SpineShoulder].AddChildNode(this.Joints[JointType.Neck]);
-        this.Joints[JointType.Neck].AddChildNode(this.Joints[JointType.Head]);
+        this.JointNodes[JointType.SpineBase].AddChildNode(this.JointNodes[JointType.SpineMid]);
+        this.JointNodes[JointType.SpineMid].AddChildNode(this.JointNodes[JointType.SpineShoulder]);
+        this.JointNodes[JointType.SpineShoulder].AddChildNode(this.JointNodes[JointType.Neck]);
+        this.JointNodes[JointType.Neck].AddChildNode(this.JointNodes[JointType.Head]);
 
         // left arm
-        this.Joints[JointType.SpineShoulder].AddChildNode(this.Joints[JointType.ShoulderLeft]);
-        this.Joints[JointType.ShoulderLeft].AddChildNode(this.Joints[JointType.ElbowLeft]);
-        this.Joints[JointType.ElbowLeft].AddChildNode(this.Joints[JointType.WristLeft]);
-        this.Joints[JointType.WristLeft].AddChildNode(this.Joints[JointType.HandLeft]);
-        this.Joints[JointType.HandLeft].AddChildNode(this.Joints[JointType.HandTipLeft]);
-        this.Joints[JointType.WristLeft].AddChildNode(this.Joints[JointType.ThumbLeft]);
+        this.JointNodes[JointType.SpineShoulder].AddChildNode(this.JointNodes[JointType.ShoulderLeft]);
+        this.JointNodes[JointType.ShoulderLeft].AddChildNode(this.JointNodes[JointType.ElbowLeft]);
+        this.JointNodes[JointType.ElbowLeft].AddChildNode(this.JointNodes[JointType.WristLeft]);
+        this.JointNodes[JointType.WristLeft].AddChildNode(this.JointNodes[JointType.HandLeft]);
+        this.JointNodes[JointType.HandLeft].AddChildNode(this.JointNodes[JointType.HandTipLeft]);
+        this.JointNodes[JointType.WristLeft].AddChildNode(this.JointNodes[JointType.ThumbLeft]);
 
         // right arm
-        this.Joints[JointType.SpineShoulder].AddChildNode(this.Joints[JointType.ShoulderRight]);
-        this.Joints[JointType.ShoulderRight].AddChildNode(this.Joints[JointType.ElbowRight]);
-        this.Joints[JointType.ElbowRight].AddChildNode(this.Joints[JointType.WristRight]);
-        this.Joints[JointType.WristRight].AddChildNode(this.Joints[JointType.HandRight]);
-        this.Joints[JointType.HandRight].AddChildNode(this.Joints[JointType.HandTipRight]);
+        this.JointNodes[JointType.SpineShoulder].AddChildNode(this.JointNodes[JointType.ShoulderRight]);
+        this.JointNodes[JointType.ShoulderRight].AddChildNode(this.JointNodes[JointType.ElbowRight]);
+        this.JointNodes[JointType.ElbowRight].AddChildNode(this.JointNodes[JointType.WristRight]);
+        this.JointNodes[JointType.WristRight].AddChildNode(this.JointNodes[JointType.HandRight]);
+        this.JointNodes[JointType.HandRight].AddChildNode(this.JointNodes[JointType.HandTipRight]);
 
-        this.Joints[JointType.WristRight].AddChildNode(this.Joints[JointType.ThumbRight]);
+        this.JointNodes[JointType.WristRight].AddChildNode(this.JointNodes[JointType.ThumbRight]);
     }
 
     private void CreateJoints()
     {
-        if (this.Joints == null)
-        {
-            this.Joints = new Dictionary<JointType, JointNode>();
-        }
-
-        this.Joints.Clear();
+        this.JointNodes.Clear();
 
         foreach (JointType type in Enum.GetValues(typeof(JointType)))
         {
             JointNode joint =  GetJoint(type);
             if(joint == null)
             {
-                joint = ScriptableObject.CreateInstance<JointNode>();
-
+                joint = new JointNode();
                 joint.Init(type.ToString());
             }
 
-            this.Joints.Add(type, joint);
+            this.JointNodes.Add(type, joint);
         }
     }
 
@@ -189,17 +193,17 @@ public class KinectSkeleton : ScriptableObject
             }
 
             // set the raw joint value for the node
-            this.Joints[jt].SetRawtData(fj.Position, fj.Rotation);
+            this.JointNodes[jt].SetRawtData(fj.Position, fj.Rotation);
         }
 
         offsetPosition = Vector3.zero;
         offsetRotation = Quaternion.identity;
 
         // calculate the relative joint and rotation
-        this.Joints[JointType.SpineBase].CalculateOffsets(null, offsetPosition, offsetRotation);
+        this.JointNodes[JointType.SpineBase].CalculateOffsets(null, offsetPosition, offsetRotation);
     }
 
-    internal static KinectSkeleton.SegmentType GetSegmentType(JointType type)
+    private static KinectSkeleton.SegmentType GetSegmentType(JointType type)
     {
         KinectSkeleton.SegmentType segment = KinectSkeleton.SegmentType.Body;
 

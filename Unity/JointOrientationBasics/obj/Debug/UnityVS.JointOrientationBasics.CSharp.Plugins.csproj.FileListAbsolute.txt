@@ -13,6 +13,5 @@ C:\Code\workshop\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityEditor
 C:\Code\workshop\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityEngine.dll
 C:\Code\workshop\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityEngine.xml
 C:\Code\workshop\Unity\JointOrientationBasics\Temp\UnityVS_bin\Debug\UnityEditor.xml
-C:\Code\workshop\Unity\JointOrientationBasics\obj\Debug\UnityVS.JointOrientationBasics.CSharp.Plugins.csprojResolveAssemblyReference.cache
 C:\Code\workshop\Unity\JointOrientationBasics\obj\Debug\Assembly-CSharp-firstpass.dll
 C:\Code\workshop\Unity\JointOrientationBasics\obj\Debug\Assembly-CSharp-firstpass.pdb

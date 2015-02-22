@@ -2,14 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[Serializable]
-public class JointNode : ScriptableObject
+public class JointNode
 {
     public string Name;
 
     public JointNode Parent;
-
-    public List<JointNode> Children;
 
     public Vector3 LocalPosition;
 
@@ -18,6 +15,20 @@ public class JointNode : ScriptableObject
     public Vector3 RawPosition;
 
     public Quaternion RawRotation;
+
+    private List<JointNode> children;
+    public List<JointNode> Children
+    {
+        get
+        {
+            if (this.children == null)
+            {
+                this.children = new List<JointNode>();
+            }
+
+            return this.children;
+        }
+    }
 
     /// <summary>
     /// returns the postion of the joint from the parent
@@ -88,8 +99,6 @@ public class JointNode : ScriptableObject
 
         this.Parent = null;
 
-        this.Children = null;
-
         this.LocalPosition = Vector3.zero;
 
         this.LocalRotation = Quaternion.identity;
@@ -97,6 +106,8 @@ public class JointNode : ScriptableObject
         this.RawPosition = Vector3.zero;
 
         this.RawRotation = Quaternion.identity;
+
+        this.Children.Clear();
     }
 
     /// <summary>
@@ -152,11 +163,6 @@ public class JointNode : ScriptableObject
 
     public void AddChildNode(JointNode joint)
     {
-        if (this.Children == null)
-        {
-            this.Children = new List<JointNode>();
-        }
-
         this.Children.Add(joint);
     }
 
